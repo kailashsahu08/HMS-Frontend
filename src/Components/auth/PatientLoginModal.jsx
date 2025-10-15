@@ -9,7 +9,10 @@ import {
   Checkbox,
   FormControlLabel,
   CircularProgress,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const rightImage =
@@ -29,13 +32,17 @@ const PatientAuthModal = ({ onClose }) => {
 
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     email: '',
+    contact_number: '',
     password: '',
     password_confirmation: '',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -146,15 +153,28 @@ const PatientAuthModal = ({ onClose }) => {
 
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {!isLogin && (
-              <TextField
-                label="Full Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                fullWidth
-                required
-                variant="outlined"
-              />
+              <>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <TextField
+                    label="First Name"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    variant="outlined"
+                  />
+                  <TextField
+                    label="Last Name"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    variant="outlined"
+                  />
+                </Box>
+              </>
             )}
             <TextField
               label="Email"
@@ -166,6 +186,18 @@ const PatientAuthModal = ({ onClose }) => {
               variant="outlined"
               type="email"
             />
+            {!isLogin && (
+              <TextField
+                label="Contact Number"
+                name="contact_number"
+                value={formData.contact_number}
+                onChange={handleChange}
+                fullWidth
+                required
+                variant="outlined"
+                type="tel"
+              />
+            )}
             <TextField
               label="Password"
               name="password"
@@ -173,8 +205,21 @@ const PatientAuthModal = ({ onClose }) => {
               onChange={handleChange}
               fullWidth
               required
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               variant="outlined"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             {!isLogin && (
               <TextField
@@ -184,8 +229,21 @@ const PatientAuthModal = ({ onClose }) => {
                 onChange={handleChange}
                 fullWidth
                 required
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 variant="outlined"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             )}
 

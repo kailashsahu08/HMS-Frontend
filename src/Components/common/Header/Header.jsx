@@ -35,7 +35,6 @@ const Header = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const { pathname } = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const navItems = [
     { path: "/", label: "Home" },
@@ -336,8 +335,7 @@ const Header = () => {
               {isAuthenticated ? (
                 <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 1 }}>
                   <Button
-                    component={Link}
-                    to="/dashboard"
+                    onClick={() => window.location.href = 'http://localhost:8000/admin'}
                     startIcon={<DashboardIcon />}
                     sx={{
                       color: "text.secondary",
