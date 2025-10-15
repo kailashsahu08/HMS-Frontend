@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
   // Check if user is logged in on app start
   useEffect(() => {
@@ -31,26 +32,32 @@ export const AuthProvider = ({ children }) => {
 
     checkAuth();
   }, []);
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   const login = async (email, password) => {
     try {
-      // Replace with your actual API call
-      const response = await fetch('/api/login', {
+      const response = await fetch(`${baseUrl}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         const { user, token } = data;
-        
-        // Store in localStorage
+  
+        // Store token and user data
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(user));
-        
+  
         setUser(user);
         setIsAuthenticated(true);
         return { success: true };
@@ -66,7 +73,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       // Replace with your actual API call
-      const response = await fetch('/api/register', {
+      const response = await fetch(`${baseUrl}/api/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,6 +83,12 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
+        const { user, token } = data;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userData', JSON.stringify(user));
+  
+        setUser(user);
+        setIsAuthenticated(true);
         return { success: true, data };
       } else {
         const error = await response.json();
@@ -100,6 +113,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    getAuthHeaders
   };
 
   return (

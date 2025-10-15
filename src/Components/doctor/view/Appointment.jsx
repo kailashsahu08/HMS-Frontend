@@ -14,6 +14,7 @@ const Appointment = ({ doctor, baseUrl, stripePromise }) => {
   const [appointmentType, setAppointmentType] = useState("in-person");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [clientSecret, setClientSecret] = useState("");
+  const [errors, setErrors] = useState({});
 
   const getDayName = (date) => {
     const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -84,66 +85,60 @@ const Appointment = ({ doctor, baseUrl, stripePromise }) => {
   }
 
   const handleBookClick = async () => {
-    if (!selectedDate) { alert("Please select a date"); return; }
-    if (!selectedTime) { alert("Please select a time slot"); return; }
-    if (!patientName || !phoneNumber) { alert("Please fill in all required fields"); return; }
-    if (!appointmentType) { alert("Please select appointment type"); return; }
+    const validationErrors = {};
+    if (!selectedDate)               validationErrors.selectedDate = "Please select a date";
+    if (!selectedTime)               validationErrors.selectedTime = "Please select a time slot";
+    if (!patientName)                validationErrors.patientName = "Please enter patient name";
+    if (!phoneNumber)                validationErrors.phoneNumber = "Please enter phone number";
+    if (!appointmentType)            validationErrors.appointmentType = "Please select appointment type";
 
-    // Arrange form data
-    const appointmentData = {
-        doctor_id: doctor.id,
-        department_id: doctor.department_id,
-        appointment_date: selectedDate,
-        appointment_time: selectedTime,
-        patient_name: patientName,
-        phone_number: phoneNumber,
-        description: description,
-        appointment_type: appointmentType,
-        status: "pending"
-    };
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
     try {
-        // Step 1: Create appointment
-        const appointmentRes = await fetch(`${baseUrl}/api/appointments`, {
+        const res = await fetch(`${baseUrl}/api/create-payment-intent`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(appointmentData),
+          body: JSON.stringify({ amount: doctor.consultation_fee }),
         });
     
-        if (!appointmentRes.ok) {
-          const errorData = await appointmentRes.json();
-          throw new Error(errorData.message || "Failed to create appointment");
-        }
-    
-        const appointment = await appointmentRes.json();
-        if (appointment) {
-            resetFormData();
-            toast.success("Appointment created successfully!");
-          }
-      
-    
-        // Step 2: Create payment intent
-        // const res = await fetch(`${baseUrl}/api/create-payment-intent`, {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify({ amount: doctor.consultation_fee }),
-        // });
-    
-        // const data = await res.json();
-        // setClientSecret(data.clientSecret);
-        // setShowPaymentModal(true);
+        const data = await res.json();
+        
+        setClientSecret(data.clientSecret);
+        setShowPaymentModal(true);
       } catch (error) {
         toast.error("Something went wrong while booking appointment.");
       }
   };
-
-  const handleSubmit = () => {
-    if (!selectedDate) { alert("Please select a date"); return; }
-    if (!selectedTime) { alert("Please select a time slot"); return; }
-    if (!patientName || !phoneNumber){ alert("Please fill in all required fields"); return; }
-
-    const data = { selectedDate, selectedTime, patientName, phoneNumber, description };
-    console.log(data);
+  const handlePaymentSuccess = async () => {
+    const appointmentData = {
+      doctor_id: doctor.id,
+      department_id: doctor.department_id,
+      appointment_date: selectedDate,
+      appointment_time: selectedTime,
+      patient_name: patientName,
+      phone_number: phoneNumber,
+      description: description,
+      appointment_type: appointmentType,
+      status: "confirmed", // or "pending" as required
+    };
+  
+    try {
+      const appointmentRes = await fetch(`${baseUrl}/api/appointments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(appointmentData),
+      });
+  
+      if (!appointmentRes.ok) {
+        throw new Error("Failed to create appointment");
+      }
+      toast.success("Appointment created!");
+      resetFormData();
+    } catch (error) {
+      toast.error("Could not book appointment after payment");
+    }
   };
+
 
   return (
     <div className="bg-white rounded-3xl p-6 shadow-xl sticky top-8">
@@ -183,6 +178,9 @@ const Appointment = ({ doctor, baseUrl, stripePromise }) => {
             })}
           </div>
         </div>
+        {errors.selectedDate && (
+          <p className="text-red-500 text-xs mt-1">{errors.selectedDate}</p>
+        )}
       </div>
 
       <div className="mb-6">
@@ -209,17 +207,26 @@ const Appointment = ({ doctor, baseUrl, stripePromise }) => {
             <p className="text-black font-medium">Please select a date first</p>
           </div>
         )}
+        {errors.selectedTime && (
+          <p className="text-red-500 text-xs mt-1">{errors.selectedTime}</p>
+        )}
       </div>
 
       <div className="space-y-4 mb-6">
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Patient Name *</label>
           <input type="text" required value={patientName} onChange={e => setPatientName(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors" placeholder="Enter patient name" />
+          {errors.patientName && (
+            <p className="text-red-500 text-xs mt-1">{errors.patientName}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
           <input type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors" placeholder="Enter phone number" />
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+          )}
         </div>
 
         <div>
@@ -252,6 +259,9 @@ const Appointment = ({ doctor, baseUrl, stripePromise }) => {
                 Virtual
                 </button>
             </div>
+            {errors.appointmentType && (
+              <p className="text-red-500 text-xs mt-1">{errors.appointmentType}</p>
+            )}
         </div>
       </div>
 
@@ -264,7 +274,7 @@ const Appointment = ({ doctor, baseUrl, stripePromise }) => {
       {showPaymentModal && (
         <Modal title={"Payment Modal"} onClose={() => setShowPaymentModal(false)}>
           <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <CheckoutForm onPaymentSuccess={handleSubmit} onClose={() => setShowPaymentModal(false)} />
+            <CheckoutForm onPaymentSuccess={handlePaymentSuccess} onClose={() => setShowPaymentModal(false)} />
           </Elements>
         </Modal>
       )}
