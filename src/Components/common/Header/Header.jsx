@@ -1,15 +1,42 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  Avatar,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  useTheme,
+  useMediaQuery,
+  Container,
+} from "@mui/material";
+import {
+  Menu as MenuIcon,
+  Person as PersonIcon,
+  Settings as SettingsIcon,
+  Logout as LogoutIcon,
+  Dashboard as DashboardIcon,
+} from "@mui/icons-material";
 
 const Header = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const { isAuthenticated, logout, user } = useAuth();
   const { pathname } = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Navigation items
   const navItems = [
     { path: "/", label: "Home" },
     { path: "/doctors", label: "Doctors" },
@@ -17,204 +44,376 @@ const Header = () => {
     { path: "/contact", label: "Contact" },
   ];
 
-  // User menu items
   const userMenuItems = [
-    { path: "/profile", label: "Profile", icon: User },
-    { path: "/settings", label: "Settings", icon: Settings },
+    { path: "/profile", label: "Profile", icon: PersonIcon },
+    { path: "/settings", label: "Settings", icon: SettingsIcon },
   ];
 
-  const getNavLinkClass = (path, isMobile = false) => {
-    const isActive = pathname === path;
-    const baseClass = isMobile 
-      ? "block px-3 py-2 text-base font-medium rounded-md transition-colors" 
-      : "px-3 py-2 text-sm font-medium transition-colors";
-    
-    if (isActive) {
-      return `${baseClass} text-green-600 ${isMobile ? "bg-green-50" : ""}`;
-    }
-    return `${baseClass} text-gray-600 hover:text-gray-900 ${isMobile ? "hover:bg-gray-50" : ""}`;
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-  const closeUserMenu = () => setIsUserMenuOpen(false);
+  const handleUserMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleLogout = () => {
     logout();
-    closeUserMenu();
-    closeMobileMenu();
+    handleUserMenuClose();
+    setMobileOpen(false);
   };
 
-  const renderNavLinks = (isMobile = false) => (
-    <>
+  const isActive = (path) => pathname === path;
+
+  // Desktop Navigation Items
+  const renderNavLinks = () => (
+    <Box sx={{ display: "flex", gap: 1 }}>
       {navItems.map(({ path, label }) => (
-        <Link
+        <Button
           key={path}
+          component={Link}
           to={path}
-          className={getNavLinkClass(path, isMobile)}
-          onClick={isMobile ? closeMobileMenu : undefined}
+          sx={{
+            color: isActive(path) ? "success.main" : "text.secondary",
+            fontWeight: isActive(path) ? 600 : 500,
+            fontSize: "0.9375rem",
+            textTransform: "none",
+            px: 2,
+            py: 1,
+            borderRadius: 1,
+            position: "relative",
+            "&:hover": {
+              color: "text.primary",
+              backgroundColor: "action.hover",
+            },
+            "&::after": isActive(path)
+              ? {
+                  content: '""',
+                  position: "absolute",
+                  bottom: 0,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "60%",
+                  height: 2,
+                  backgroundColor: "success.main",
+                  borderRadius: "2px 2px 0 0",
+                }
+              : {},
+          }}
         >
           {label}
-        </Link>
+        </Button>
       ))}
+    </Box>
+  );
+
+  // User Menu
+  const renderUserMenu = () => (
+    <>
+      <IconButton
+        onClick={handleUserMenuOpen}
+        sx={{
+          ml: 1,
+          border: 1,
+          borderColor: "divider",
+          "&:hover": {
+            borderColor: "primary.main",
+            backgroundColor: "action.hover",
+          },
+        }}
+      >
+        <Avatar
+          sx={{
+            width: 32,
+            height: 32,
+            bgcolor: "success.main",
+            fontSize: "0.875rem",
+          }}
+        >
+          {user?.name?.charAt(0) || "U"}
+        </Avatar>
+      </IconButton>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleUserMenuClose}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        PaperProps={{
+          elevation: 3,
+          sx: {
+            mt: 1.5,
+            minWidth: 200,
+            borderRadius: 2,
+            "& .MuiMenuItem-root": {
+              px: 2,
+              py: 1.5,
+              borderRadius: 1,
+              mx: 1,
+              my: 0.5,
+            },
+          },
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5, mb: 1 }}>
+          <Box sx={{ fontWeight: 600, fontSize: "0.9375rem" }}>
+            {user?.name || "User"}
+          </Box>
+          <Box sx={{ fontSize: "0.8125rem", color: "text.secondary", mt: 0.5 }}>
+            {user?.email || "user@example.com"}
+          </Box>
+        </Box>
+        <Divider />
+        {userMenuItems.map(({ path, label, icon: Icon }) => (
+          <MenuItem
+            key={path}
+            component={Link}
+            to={path}
+            onClick={handleUserMenuClose}
+          >
+            <ListItemIcon>
+              <Icon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>{label}</ListItemText>
+          </MenuItem>
+        ))}
+        <Divider sx={{ my: 0.5 }} />
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Sign Out</ListItemText>
+        </MenuItem>
+      </Menu>
     </>
   );
 
-  const renderUserMenu = () => (
-    <div className="relative">
-      <button
-        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-50 transition-colors"
-      >
-        <User className="h-4 w-4" />
-        <span className="hidden md:inline">{user?.name || "Profile"}</span>
-      </button>
-
-      {isUserMenuOpen && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={closeUserMenu} />
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border border-gray-200">
-            {userMenuItems.map(({ path, label, icon: Icon }) => (
-              <Link
-                key={path}
-                to={path}
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                onClick={closeUserMenu}
-              >
-                <Icon className="h-4 w-4 mr-3" />
-                {label}
-              </Link>
-            ))}
-            <hr className="my-1 border-gray-100" />
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+  // Mobile Drawer
+  const drawer = (
+    <Box sx={{ width: 280, pt: 2 }}>
+      <Box sx={{ px: 2, mb: 3 }}>
+        <img src="/logo.svg" alt="Logo" style={{ height: 48 }} />
+      </Box>
+      <Divider />
+      <List>
+        {navItems.map(({ path, label }) => (
+          <ListItem key={path} disablePadding>
+            <ListItemButton
+              component={Link}
+              to={path}
+              onClick={handleDrawerToggle}
+              selected={isActive(path)}
+              sx={{
+                mx: 1,
+                borderRadius: 1,
+                "&.Mui-selected": {
+                  backgroundColor: "success.lighter",
+                  color: "success.main",
+                  fontWeight: 600,
+                  "&:hover": {
+                    backgroundColor: "success.light",
+                  },
+                },
+              }}
             >
-              <LogOut className="h-4 w-4 mr-3" />
-              Sign Out
-            </button>
-          </div>
+              <ListItemText primary={label} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+
+      {isAuthenticated && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                component={Link}
+                to="/dashboard"
+                onClick={handleDrawerToggle}
+                sx={{ mx: 1, borderRadius: 1 }}
+              >
+                <ListItemIcon>
+                  <DashboardIcon />
+                </ListItemIcon>
+                <ListItemText primary="Dashboard" />
+              </ListItemButton>
+            </ListItem>
+            {userMenuItems.map(({ path, label, icon: Icon }) => (
+              <ListItem key={path} disablePadding>
+                <ListItemButton
+                  component={Link}
+                  to={path}
+                  onClick={handleDrawerToggle}
+                  sx={{ mx: 1, borderRadius: 1 }}
+                >
+                  <ListItemIcon>
+                    <Icon />
+                  </ListItemIcon>
+                  <ListItemText primary={label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={handleLogout}
+                sx={{ mx: 1, borderRadius: 1 }}
+              >
+                <ListItemIcon>
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText primary="Sign Out" />
+              </ListItemButton>
+            </ListItem>
+          </List>
         </>
       )}
-    </div>
-  );
 
-  const renderAuthButtons = (isMobile = false) => (
-    <>
-      <Link
-        to="/login"
-        className={isMobile 
-          ? "block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-          : "hidden md:block text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 transition-colors"
-        }
-        onClick={isMobile ? closeMobileMenu : undefined}
-      >
-        Log In
-      </Link>
-      <Link
-        to="/signup"
-        className={isMobile 
-          ? "block px-3 py-2 text-base font-medium bg-black text-white rounded-md hover:bg-gray-800 transition-colors text-center"
-          : "hidden md:block bg-black text-white px-4 py-2 rounded text-sm font-medium hover:bg-gray-800 transition-colors"
-        }
-        onClick={isMobile ? closeMobileMenu : undefined}
-      >
-        Sign Up
-      </Link>
-    </>
+      {!isAuthenticated && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Box sx={{ px: 2 }}>
+            <Button
+              component={Link}
+              to="/login"
+              fullWidth
+              variant="outlined"
+              sx={{
+                textTransform: "none",
+                borderRadius: 2,
+                py: 1.25,
+                fontWeight: 500,
+              }}
+              onClick={handleDrawerToggle}
+            >
+              Log In
+            </Button>
+          </Box>
+        </>
+      )}
+    </Box>
   );
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-gray-200 shadow-sm bg-white">
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex flex-row">
-            <Link to="/" className="flex items-center">
-              <img src="/logo.svg" alt="Logo" className="h-16 object-contain" />
-            </Link>
+    <>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          backgroundColor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Container maxWidth="xl">
+          <Toolbar disableGutters sx={{ minHeight: 64, justifyContent: "space-between" }}>
+            {/* Logo */}
+            <Box
+              component={Link}
+              to="/"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                textDecoration: "none",
+                mr: 4,
+              }}
+            >
+              <img src="/logo.svg" alt="Logo" style={{ height: 48 }} />
+            </Box>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex md:items-center md:space-x-8">
+            <Box sx={{ display: { xs: "none", md: "flex" }, flexGrow: 1 }}>
               {renderNavLinks()}
-            </div>
-          </div>
+            </Box>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="hidden md:inline-flex text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 transition-colors"
-                >
-                  Dashboard
-                </Link>
-                {renderUserMenu()}
-              </>
-            ) : (
-              renderAuthButtons()
-            )}
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-        isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-      }`}>
-        <div className="relative z-50 bg-white border-t border-gray-200 shadow-lg">
-          <div className="px-4 py-3 space-y-1">
-            {renderNavLinks(true)}
-            
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-                  onClick={closeMobileMenu}
-                >
-                  Dashboard
-                </Link>
-                {userMenuItems.map(({ path, label }) => (
-                  <Link
-                    key={path}
-                    to={path}
-                    className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-                    onClick={closeMobileMenu}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {/* Desktop Auth Actions */}
+              {isAuthenticated ? (
+                <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 1 }}>
+                  <Button
+                    component={Link}
+                    to="/dashboard"
+                    startIcon={<DashboardIcon />}
+                    sx={{
+                      color: "text.secondary",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      "&:hover": {
+                        color: "text.primary",
+                        backgroundColor: "action.hover",
+                      },
+                    }}
                   >
-                    {label}
-                  </Link>
-                ))}
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-3 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              renderAuthButtons(true)
-            )}
-          </div>
-        </div>
-      </div>
-      
-      {/* Mobile Menu Backdrop */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 z-40  transition-opacity duration-300 ease-in-out bg-opacity-25 md:hidden" 
-          onClick={closeMobileMenu} 
-        />
-      )}
-    </nav>
+                    Dashboard
+                  </Button>
+                  {renderUserMenu()}
+                </Box>
+              ) : (
+                <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
+                  <Button
+                    component={Link}
+                    to="/login"
+                    sx={{
+                      color: "text.secondary",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      px: 2.5,
+                      "&:hover": {
+                        color: "text.primary",
+                        backgroundColor: "action.hover",
+                      },
+                    }}
+                  >
+                    Log In
+                  </Button>
+                </Box>
+              )}
+
+              {/* Mobile Menu Button */}
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{
+                  display: { md: "none" },
+                  color: "text.primary",
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        variant="temporary"
+        anchor="right"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            width: 280,
+          },
+        }}
+      >
+        {drawer}
+      </Drawer>
+
+      {/* Spacer to prevent content from going under fixed AppBar */}
+      <Toolbar sx={{ minHeight: 64 }} />
+    </>
   );
 };
 
