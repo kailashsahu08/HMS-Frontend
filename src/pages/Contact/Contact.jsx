@@ -1,3 +1,4 @@
+import { Box, Button, Grid, Paper, TextField, Typography } from "@mui/material";
 import React, { useEffect, useRef } from "react";
 
 const Contact = () => {
@@ -151,64 +152,27 @@ const Contact = () => {
             </div>
 
             {/* Contact Form */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                Send us a Message
-              </h3>
-              <form className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Message
-                  </label>
-                  <textarea
-                    rows="4"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                  ></textarea>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-                >
-                  Send Message
-                </button>
-              </form>
-            </div>
+            <Grid item xs={12} md={6}>
+              <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+                <Typography variant="h6" fontWeight={600} mb={3}>
+                  Send us a Message
+                </Typography>
+                <Box component="form" display="flex" flexDirection="column" gap={2}>
+                  <TextField label="Name" variant="outlined" fullWidth />
+                  <TextField label="Email" type="email" variant="outlined" fullWidth />
+                  <TextField label="Phone Number" type="tel" variant="outlined" fullWidth />
+                  <TextField label="Subject" variant="outlined" fullWidth />
+                  <TextField label="Message" variant="outlined" multiline rows={4} fullWidth />
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: "#22c55e", "&:hover": { bgcolor: "#16a34a" }, py: 1.5 }}
+                    fullWidth
+                  >
+                    Send Message
+                  </Button>
+                </Box>
+              </Paper>
+            </Grid>
           </div>
         </div>
       </div>
